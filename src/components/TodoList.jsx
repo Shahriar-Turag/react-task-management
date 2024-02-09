@@ -26,25 +26,26 @@ function TodoList() {
 		}
 	}, []);
 
-	useEffect(() => {
-		localStorage.setItem('tasks', JSON.stringify(tasks));
-	}, [tasks]);
+	// useEffect(() => {
+	// 	localStorage.setItem('tasks', JSON.stringify(tasks));
+	// }, [tasks]);
 
 	const handleAddTask = () => {
 		if (taskName.trim() !== '') {
-			setTasks((prevTasks) => [
-				...prevTasks,
-				{
-					name: taskName,
-					status: false,
-					priority: priority,
-					description: taskDescription,
-				},
-			]);
+			const newTask = {
+				name: taskName,
+				status: false,
+				priority: priority,
+				description: taskDescription,
+			};
+			setTasks((prevTasks) => [...prevTasks, newTask]);
 			setTaskName('');
 			setTaskDescription('');
 			setPriority('all');
 			setStatus('all');
+
+			// Update localStorage with the new tasks
+			localStorage.setItem('tasks', JSON.stringify([...tasks, newTask]));
 		}
 	};
 
@@ -72,16 +73,21 @@ function TodoList() {
 					: task
 			)
 		);
-		const editModal = document.getElementById('edit_modal');
-		if (editModal) {
-			editModal.close();
-		}
+
+		// Update localStorage with the updated tasks
+		localStorage.setItem('tasks', JSON.stringify(tasks));
 	};
 
 	console.log(tasks);
 
 	const handleDeleteTask = (index) => {
 		setTasks((prevTasks) => prevTasks.filter((_, i) => i !== index));
+
+		// Update localStorage with the updated tasks after deletion
+		localStorage.setItem(
+			'tasks',
+			JSON.stringify(tasks.filter((_, i) => i !== index))
+		);
 	};
 
 	const handleToggleTaskStatus = (index) => {
@@ -171,7 +177,7 @@ function TodoList() {
 						</div>
 					</dialog>
 				</div>
-				<div>
+				<div className='font-bold'>
 					<p>Total Tasks: {tasks.length}</p>
 					<p>
 						Completed Tasks:{' '}
@@ -218,6 +224,7 @@ function TodoList() {
 							<th>Action</th>
 						</tr>
 					</thead>
+
 					<tbody>
 						{filteredTasks.map((task, index) => (
 							<tr key={index}>
