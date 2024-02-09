@@ -1,15 +1,11 @@
-import { useState } from 'react';
-
 import './App.css';
-import { TaskList } from './components/TaskList';
+import TodoList from './components/TodoList';
 
 function App() {
-	const [tasks, setTasks] = useState([]);
-
 	return (
 		<div>
 			<h1>Todo List</h1>
-			<TaskList />
+			<TodoList />
 		</div>
 	);
 }
