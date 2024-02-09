@@ -8,16 +8,21 @@ function TodoList() {
 	const [tasks, setTasks] = useState([]);
 	const [taskName, setTaskName] = useState('');
 	const [taskDescription, setTaskDescription] = useState('');
-	const [priority, setPriority] = useState('low');
+	const [status, setStatus] = useState('all');
+	const [priority, setPriority] = useState('all');
 	const [editingIndex, setEditingIndex] = useState(null);
 	const [editingTaskName, setEditingTaskName] = useState('');
 	const [editingPriority, setEditingPriority] = useState('low');
 	const [editingTaskDescription, setEditingTaskDescription] = useState('');
+	const [expandedDescriptionIndex, setExpandedDescriptionIndex] =
+		useState(null);
+	const [filteredTask, setFilteredTasks] = useState([]);
 
 	useEffect(() => {
 		const storedTasks = JSON.parse(localStorage.getItem('tasks'));
 		if (storedTasks) {
 			setTasks(storedTasks);
+			setFilteredTasks(storedTasks);
 		}
 	}, []);
 
@@ -37,6 +42,9 @@ function TodoList() {
 				},
 			]);
 			setTaskName('');
+			setTaskDescription('');
+			setPriority('all');
+			setStatus('all');
 		}
 	};
 
@@ -83,6 +91,24 @@ function TodoList() {
 			)
 		);
 	};
+
+	const toggleDescription = (index) => {
+		if (expandedDescriptionIndex === index) {
+			setExpandedDescriptionIndex(null);
+		} else {
+			setExpandedDescriptionIndex(index);
+		}
+	};
+
+	const filteredTasks = tasks.filter((task) => {
+		if (priority !== 'all' && task.priority !== priority) {
+			return false;
+		}
+		if (status !== 'all' && task.status !== (status === 'completed')) {
+			return false;
+		}
+		return true;
+	});
 
 	return (
 		<div>
@@ -153,8 +179,35 @@ function TodoList() {
 					</p>
 				</div>
 			</div>
-			<div>
-				<h2 className='text-xl font-bold'>Task Table</h2>
+			{/* Filter */}
+			<div className='flex gap-5 mt-10'>
+				<label className='flex items-center gap-2'>
+					Priority:
+					<select
+						className='select select-primary w-full max-w-xs'
+						// value={priority}
+						onChange={(e) => setPriority(e.target.value)}
+					>
+						<option value='all'>All</option>
+						<option value='low'>Low</option>
+						<option value='medium'>Medium</option>
+						<option value='high'>High</option>
+					</select>
+				</label>
+				<label className='flex items-center gap-2'>
+					Status:
+					<select
+						className='select select-primary w-full max-w-xs'
+						value={status}
+						onChange={(e) => setStatus(e.target.value)}
+					>
+						<option value='all'>All</option>
+						<option value='completed'>Completed</option>
+						<option value='incomplete'>Incomplete</option>
+					</select>
+				</label>
+			</div>
+			<div className='mt-5'>
 				<table className='w-full table table-zebra'>
 					<thead>
 						<tr>
@@ -166,7 +219,7 @@ function TodoList() {
 						</tr>
 					</thead>
 					<tbody>
-						{tasks.map((task, index) => (
+						{filteredTasks.map((task, index) => (
 							<tr key={index}>
 								<td className='flex items-center gap-2'>
 									{task.name}
@@ -174,7 +227,46 @@ function TodoList() {
 										<FaCheck className='text-emerald-500' />
 									)}{' '}
 								</td>
-								<td className=''>{task.description}</td>
+								<td className=''>
+									<div>
+										{task.description &&
+											index !==
+												expandedDescriptionIndex && (
+												<>
+													<div>
+														{task.description.substring(
+															0,
+															10
+														)}
+														...
+														<button
+															className='btn btn-sm btn-link outline-none !ring-0'
+															onClick={() =>
+																toggleDescription(
+																	index
+																)
+															}
+														>
+															See Details
+														</button>
+													</div>
+												</>
+											)}
+										{index === expandedDescriptionIndex && (
+											<>
+												<div>{task.description}</div>
+												<button
+													className='btn btn-sm btn-link outline-none !ring-0'
+													onClick={() =>
+														toggleDescription(index)
+													}
+												>
+													Hide Details
+												</button>
+											</>
+										)}
+									</div>
+								</td>
 								<td>
 									<p
 										className={
@@ -229,13 +321,16 @@ function TodoList() {
 					</tbody>
 				</table>
 			</div>
+
+			{/* edit modal */}
+
 			<div>
 				<dialog id='edit_modal' className='modal'>
 					<div className='modal-box'>
-						<h3 className='font-bold text-lg'>Edit Task</h3>
-						<div className='flex flex-col items-center'>
+						<h3 className='font-bold text-lg mb-5'>Edit Task</h3>
+						<div className='flex flex-col gap-5'>
 							<input
-								className='input input-bordered input-primary w-full max-w-xs'
+								className='input input-bordered input-primary w-full'
 								placeholder='Task name'
 								type='text'
 								value={editingTaskName}
@@ -243,8 +338,16 @@ function TodoList() {
 									setEditingTaskName(e.target.value)
 								}
 							/>
+							<textarea
+								className='textarea textarea-primary'
+								placeholder='Task description'
+								value={editingTaskDescription}
+								onChange={(e) =>
+									setEditingTaskDescription(e.target.value)
+								}
+							></textarea>
 							<select
-								className='select select-bordered select-primary w-full max-w-xs mt-2'
+								className='select select-bordered select-primary w-full '
 								value={editingPriority}
 								onChange={(e) =>
 									setEditingPriority(e.target.value)
@@ -254,13 +357,16 @@ function TodoList() {
 								<option value='medium'>Medium</option>
 								<option value='high'>High</option>
 							</select>
-							<button className='btn' onClick={handleUpdateTask}>
+							<button
+								className='btn btn-accent'
+								onClick={handleUpdateTask}
+							>
 								Update Task
 							</button>
 						</div>
 						<div className='modal-action'>
 							<form method='dialog'>
-								<button className='btn'>Close</button>
+								<button className='btn btn-error'>Close</button>
 							</form>
 						</div>
 					</div>
